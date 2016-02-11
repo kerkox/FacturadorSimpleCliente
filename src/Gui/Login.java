@@ -5,6 +5,7 @@
  */
 package Gui;
 
+import Conect.ConexionCliente;
 import Obj.Empleado;
 import Obj.Kardex;
 import java.awt.Image;
@@ -21,6 +22,7 @@ public class Login extends javax.swing.JFrame {
 
     private Kardex krdx = null;
     private int op = -1;
+    private ConexionCliente conex = null;
 
     /**
      *
@@ -28,6 +30,9 @@ public class Login extends javax.swing.JFrame {
      */
     public Login(Kardex kardex) {
         this.krdx = kardex;
+        String clienteID = System.getProperty("user.name");
+        conex = new ConexionCliente(5000, "127.0.0.1", clienteID, this);
+        conex.start();
         initComponents();
         Image icon = new ImageIcon(getClass().getResource("/Media/002.png")).getImage();
         this.setIconImage(icon);
@@ -131,16 +136,26 @@ public class Login extends javax.swing.JFrame {
 
     private void EvtAceptar(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EvtAceptar
         try {
-            
+
             String nm = txtfUserId.getText().trim();
             String ps = new String(txtfUserPassword.getPassword());
-            if(op==0){
+            if (op == 0) {
                 this.krdx.add(new Empleado(nm, nm, ps));
                 JOptionPane.showMessageDialog(null, "Se ha creado el usuario satisfactoriamente");
-                op=-1;
-                
+                op = -1;
+
             }
-            new MainFrame(this.krdx, this.krdx.accesoEmpleado(nm, ps)).setVisible(true);
+                    System.out.println("LLego a piso 1");
+            conex.enviarTrama(2, new Empleado("001", nm, ps));
+            System.out.println("Error trama paso");
+            //Aqui se espera la respuesta del servidor para el logueo
+            if (conex.logueo()) {
+                JOptionPane.showMessageDialog(this, "Se LOGUEO EXITOSAMENTE");
+            } else {
+                JOptionPane.showMessageDialog(this, "ACCES DENIED");
+            }
+
+//            new MainFrame(this.krdx, this.krdx.accesoEmpleado(nm, ps)).setVisible(true);
             this.txtfUserId.setText("");
             this.txtfUserPassword.setText("");
             this.setVisible(false);
@@ -156,7 +171,7 @@ public class Login extends javax.swing.JFrame {
 //            }else{
 //                //nada por ahora 
 //            }
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(rootPane, ex.getMessage(), this.krdx.getNombre() + "Error", JOptionPane.ERROR_MESSAGE);
         }
